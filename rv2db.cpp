@@ -53,6 +53,7 @@ using namespace boost::property_tree;
         if(res != AYNX_OK)                              \
         {                                               \
                 printf(callname "() error: %d\n", res); \
+                LOG4CXX_TRACE(logger," "<<callname <<"error "<<res ); \
                 return res;                             \
         }
 
