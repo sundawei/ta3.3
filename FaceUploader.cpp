@@ -748,6 +748,7 @@ void  *GetUrlPic(void *arg)
 			cv::Mat imgMat = cv::imdecode(Mat(data1), CV_LOAD_IMAGE_COLOR);
 
 			IplImage img=imgMat;
+			//printf("image size = %d,%d\n",img.width,img.height);
 
 			Enroll(0,0,&img,buffer,nsize);
 			data1.clear();

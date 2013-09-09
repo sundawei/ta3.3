@@ -31,7 +31,7 @@
 #include <log4cxx/logger.h>    
 #include <log4cxx/logstring.h> 
 #include <log4cxx/propertyconfigurator.h> 
-#include "AyonixGenAge.h"
+//#include "AyonixGenAge.h"
 
 
 
@@ -104,7 +104,8 @@ LoggerPtr logger=0;
 
 void *engine =0;
 
-int  getGenderAge(char* img,int size,int &igender,int &iage);
+//extern int  getGenderAge(char* img,int size,int &igender,int &iage);
+//int  getGenderAge(char* img,int size,int &igender,int &iage);
 
 typedef vector<R_Setting> SeT;
 SeT readset( std::ifstream & is )//read server settings
@@ -796,7 +797,7 @@ void UpdateAfid(vector<string>& allfaces,string suuid,int newfacetime,string pkg
 	void* afid = 0;
 	unsigned int size = 0;
 	// enroll from faces collection
-	LOG4CXX_TRACE(logger,"update enrolling... ");
+	LOG4CXX_TRACE(logger,"update enrolling... 3");
 
 	string safiddata;
 
@@ -815,7 +816,7 @@ void UpdateAfid(vector<string>& allfaces,string suuid,int newfacetime,string pkg
 		{
 			LOG4CXX_TRACE(logger,"failed to save afid");
 		}
-		LOG4CXX_TRACE(logger,"success enrolling....");
+		LOG4CXX_TRACE(logger,"success enrolling.... 2");
 		AFIDReleaseAfid(afid);
 	}
 	else
@@ -927,9 +928,11 @@ int main2(int argc, char** argv) {
 				void* afid = 0;
 				unsigned int size = 0;
 				// enroll from faces collection
-				LOG4CXX_TRACE(logger,"enrolling... ");
+				LOG4CXX_TRACE(logger,"enrolling... 1");
 
+				LOG4CXX_TRACE(logger,"befor AFIDEnrollPerson " << facesCollection.nFaces <<" "<<engine);
 				res = AFIDEnrollPerson(engine, &facesCollection, &afid, &size);
+				LOG4CXX_TRACE(logger,"after AFIDEnrollPerson "<<facesCollection.nFaces);
 				if (res == AYNX_OK) {
 					LOG4CXX_TRACE(logger,"ok");
 					//res = SaveBinaryFile(afid, size, argv[1]);
@@ -944,7 +947,7 @@ int main2(int argc, char** argv) {
 					string sgender = "NG";
 					string sage = "NG";
 					int igender=-1,iage=-1;
-					getGenderAge((char*)s.data(),s.size(),igender,iage);
+					//getGenderAge((char*)s.data(),s.size(),igender,iage);
 					if(igender != -1)
 					{
 						sgender = MaleFemale[igender];
@@ -1026,6 +1029,7 @@ int main2(int argc, char** argv) {
 	}
 	return 1;   
 }
+/*
 void *engine2 = 0;
 char *trimwhitespace(char *str)
 {
@@ -1039,6 +1043,7 @@ char *trimwhitespace(char *str)
 	*(end+1) = 0;
         return str;
 }
+char enginePath[100]={0};
 int  getGenderAge(char* img,int size,int &igender,int &iage)
 {
 	int res;
@@ -1046,14 +1051,14 @@ int  getGenderAge(char* img,int size,int &igender,int &iage)
 	if(engine2==0)
 	{
 		FILE *iFile = fopen("aga.cfg", "r");
-		char enginePath[1024]={0};
 		if(!iFile)
 		{
         	//printf("Cannot read config file: aga.ini\n");
         	LOG4CXX_TRACE(logger,"Cannot read config file: aga.ini");
 		}
-		fgets(enginePath, 1024, iFile);
+		fgets(enginePath, 100, iFile);
 		fclose(iFile);
+		printf("%s,%s\n",enginePath,trimwhitespace(enginePath));
 
 		SAFE_CALL(AGAInitialize(trimwhitespace(enginePath), &engine2), "AGAInitialize");
 	}
@@ -1094,17 +1099,20 @@ int  getGenderAge(char* img,int size,int &igender,int &iage)
     return 0;
 
 }
-
+//*/
 
 
 int main(int argc, char** argv)
 {
 
-	//int ig=-1,ia=-1;
-	//getGenderAge(0,0,ig,ia);
-	//return 0;
+	
 	PropertyConfigurator::configure("ta_rv2db_logconfig.cfg"); 
 	logger = Logger::getLogger("Trace_rv2db"); 
+
+
+//	int ig=-1,ia=-1;
+//	getGenderAge(0,0,ig,ia);
+//	return 0;
 
 	//read config
 	ifstream is("./rvdb_config.xml");
@@ -1151,7 +1159,7 @@ int main(int argc, char** argv)
 	LOG4CXX_TRACE(logger, GetDateString()); 
 
 	char ffnn[20]={0};
-	sprintf(ffnn,"%s","afid.conf");
+	sprintf(ffnn,"%s","afid2.conf");
 	engine = InitializeEngine(ffnn);
 	Readbdata();
 
