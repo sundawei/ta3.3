@@ -836,6 +836,35 @@ void UpdateAfid(vector<string>& allfaces,string suuid,int newfacetime,string pkg
 		UpdateDBAfid(suuid,safiddata,newfacetime);
 }
 
+void getga(int& g,int& a)
+{
+	FILE *fp=popen("./getGenderAge","r");
+	if(fp==NULL)
+		return ;
+	char buf[10]={0};
+	
+	int count=0;
+	LOG4CXX_TRACE(logger,"before getga");
+	while(fgets(buf,10,fp)!=NULL)
+	{
+		//printf("%d,%d\n",++count,atoi(buf));
+		count++;
+		if(count==1)
+			g=atoi(buf);
+		if(count==2)
+		{
+			a=atoi(buf);
+		}
+
+	}
+	LOG4CXX_TRACE(logger,"end getga");
+
+	if(pclose(fp)==-1)
+	{
+		//printf("error pclose\n");
+		LOG4CXX_TRACE(logger,"error pclose "<<errno);
+	}
+}
 
 int main2(int argc, char** argv) {
 	const char* url = argc>1 ? argv[1] : qpid_server;
@@ -947,7 +976,13 @@ int main2(int argc, char** argv) {
 					string sgender = "NG";
 					string sage = "NG";
 					int igender=-1,iage=-1;
+					FILE* ffh=fopen("./temp.jpg","wb");
+					fwrite((char*)s.data(),s.size(),1,ffh);
+					fclose(ffh);
 					//getGenderAge((char*)s.data(),s.size(),igender,iage);
+					getga(igender,iage);
+
+
 					if(igender != -1)
 					{
 						sgender = MaleFemale[igender];
