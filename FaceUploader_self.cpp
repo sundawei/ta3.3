@@ -320,9 +320,9 @@ void Enroll(int argc, _TCHAR* argv[],IplImage* img0,char* jpgdata,int jpglen)
 				SendParam* op = (SendParam*)pq;
 				op->img =  cvCloneImage(aface);
 				SendInfo(op);
-				char dbs[50]={0};
-				sprintf(dbs,"./imgd/%05d.jpg",ia++);
-				cvSaveImage(dbs,aface);
+			//	char dbs[50]={0};
+			//	sprintf(dbs,"./imgd/%05d.jpg",ia++);
+			//	cvSaveImage(dbs,aface);
 				cvReleaseImage(&aface);
 			}
 			cvReleaseImage(&frame_ys_gray);
@@ -463,4 +463,5 @@ int main( int argc, char** argv )
 	}
 	pthread_mutex_destroy(&file_mutex);
 	return 0;
+	
 }
