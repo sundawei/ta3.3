@@ -78,7 +78,11 @@ struct R_Setting
 	string qpid_server;
 	string qpid_address;
 	string days;//diff days before
+	string fv;//rec threshold value
 };
+
+float FV=0.0f;
+
 int n=0;
 //deal with interference data
 int has_bdata=0;
@@ -87,6 +91,9 @@ int bdata_counts = 0;
 
 int DAYS=0;//diff days before
 
+//set later incoming person's gender age 2 the old one
+char sprvgender[20]={0};
+char sprvage[20]={0};
 
 #define _TCHAR char
 #define _tprintf printf
@@ -127,6 +134,7 @@ SeT readset( std::ifstream & is )//read server settings
 			f.qpid_server = v.second.get<std::string>("qpid_server");
 			f.qpid_address = v.second.get<std::string>("qpid_address");
 			f.days = v.second.get<std::string>("days");
+			f.fv = v.second.get<std::string>("fv");
 			ans.push_back(f);
 		}
 	}
@@ -417,7 +425,8 @@ string DealBadData(string facedata)//verify wether spec face is not a face
 				if (!(faces->faces[i].id < 0))
 				{
 					//LOG4CXX_TRACE(logger," " << v.at(faces->faces[i].id).c_str() <<" "<<100.0f * faces->faces[i].score <<"%");
-					if(faces->faces[i].score>0.48f)
+					//if(faces->faces[i].score>0.48f)
+					if(faces->faces[i].score>0.47)
 					{
 						rets = string("bdata");//v.at(faces->faces[i].id).substr(13,36);
 					}
@@ -513,7 +522,7 @@ string FindMatchFace(string facedata,string pkgdir)
 			if (!(faces->faces[i].id < 0))
 			{
 				LOG4CXX_TRACE(logger," " << v.at(faces->faces[i].id).c_str() <<" "<<100.0f * faces->faces[i].score <<"%");
-				if(faces->faces[i].score>0.47f)
+				if(faces->faces[i].score>FV)
 				//rets = v.at(faces->faces[i].id).substr(13,36);//updated afid dir is not correct,here add path
 					rets = v.at(faces->faces[i].id);
 				else
@@ -866,6 +875,81 @@ void getga(int& g,int& a)
 	}
 }
 
+
+void getdbgenderage(string suuid)//search db 2 find first rec gender and age
+{
+	MYSQL *con = mysql_init(NULL);
+
+	//int sfaidlen = suuid.size();
+
+	string retstr="";
+
+	string cs = suuid;
+
+	if (con == NULL)
+	{
+		LOG4CXX_TRACE(logger,"mysql_init() failed");
+		return;
+	}  
+
+	if (mysql_real_connect(con, sql_server, sql_user, sql_passwd, 
+		sql_db, 0, NULL, 0) == NULL) 
+	{
+		finish_with_error(con);
+		return;
+	} 
+	string querys = "SELECT Id,gender,age FROM face WHERE uuid ='"+cs+"'";
+
+	if(mysql_query(con, querys.c_str()))
+	{
+		finish_with_error(con);
+		return;
+	}
+
+	MYSQL_RES *result = mysql_store_result(con);
+
+	if (result == NULL) 
+	{
+		finish_with_error(con);
+		return;
+	}  
+
+	int num_fields = mysql_num_fields(result);
+
+	MYSQL_ROW row;
+	int tc=0;
+	while ((row = mysql_fetch_row(result)))
+	{
+		unsigned long *lengths;
+		lengths = mysql_fetch_lengths(result);
+		if(lengths==NULL)
+		{
+			break;
+		}
+
+		for(int i = 0; i < num_fields; i++)
+		{
+			if(i==1)
+			{
+				//string sp;
+				//sp.assign(row[i],lengths[i]);
+				//allfaces.push_back(sp);
+				//sgender.assign(row[i],lengths[i]);
+				memcpy(sprvgender,row[i],lengths[i]);
+			}
+			if(i==2)
+			{
+				//age.assign(row[i],lengths[i]);
+				memcpy(sprvage,row[i],lengths[i]);
+			}
+		}
+		tc++;
+		break;
+	}
+	mysql_free_result(result);
+	mysql_close(con);
+}
+
 int main2(int argc, char** argv) {
 	const char* url = argc>1 ? argv[1] : qpid_server;
 	const char* address = argc>2 ? argv[2] : qpid_address;
@@ -1021,7 +1105,11 @@ int main2(int argc, char** argv) {
 						UpdateAfid(vallfaces,sfuuid,atoi(ssti.c_str()),pkg_dir);
 						LOG4CXX_TRACE(logger,"end UpdateAfid");
 						LOG4CXX_TRACE(logger,"begin SendFace2DB");
-						SendFace2DB(s.size(),(char*)s.data(),size,(char*)afid,splace.c_str(),spos.c_str(),atoi(sworkmode.c_str()),scamname.c_str(),sfuuid.c_str(),ssti.c_str(),sgender.c_str(),sage.c_str(),1);//save 2 faceall	
+						memset(sprvgender,0,20);
+						memset(sprvage,0,20);
+						getdbgenderage(su_found);
+						//SendFace2DB(s.size(),(char*)s.data(),size,(char*)afid,splace.c_str(),spos.c_str(),atoi(sworkmode.c_str()),scamname.c_str(),sfuuid.c_str(),ssti.c_str(),sgender.c_str(),sage.c_str(),1);//save 2 faceall	
+						SendFace2DB(s.size(),(char*)s.data(),size,(char*)afid,splace.c_str(),spos.c_str(),atoi(sworkmode.c_str()),scamname.c_str(),sfuuid.c_str(),ssti.c_str(),sprvgender,sprvage,1);//save 2 faceall	
 						LOG4CXX_TRACE(logger,"end SendFace2DB");
 						vallfaces.clear();
 						std::vector<string>().swap(vallfaces);
@@ -1181,6 +1269,10 @@ int main(int argc, char** argv)
 		LOG4CXX_TRACE(logger, qpid_address);
 		DAYS =  atoi(t.at(0).days.c_str());
 		LOG4CXX_TRACE(logger,"compare days " <<DAYS);
+		FV = (float)atoi(t.at(0).fv.c_str())/100;
+		LOG4CXX_TRACE(logger,"FV " <<FV);
+
+
 	}
 	else
 	{
@@ -1188,7 +1280,12 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	//memset(sprvgender,0,20);
+	//memset(sprvage,0,20);
 
+	//getdbgenderage(string(argv[1]));
+	//printf("%s,%s\n",sprvgender,sprvage);
+	//return 0;
 
 	mkdir(GetDateString().c_str(),0775);
 	LOG4CXX_TRACE(logger, GetDateString()); 

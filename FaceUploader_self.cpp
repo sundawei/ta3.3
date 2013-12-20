@@ -402,9 +402,8 @@ void getPic(char* pic,long & picsize)
 
 	return ;
 }
-char buffer[1024*1024*5];
+char buffer[1024*1024*10];
 long nsize=0;
-
 void  *GetUrlPic(void *arg)
 {
 	while(1)
@@ -424,12 +423,8 @@ void  *GetUrlPic(void *arg)
 			break;
 	}
 	cvDestroyAllWindows();
-
 	return 0;
 }
-
-
-
 int main( int argc, char** argv )
 {
 	PropertyConfigurator::configure("ta_faceuploader_logconfig.cfg"); 
@@ -451,7 +446,6 @@ int main( int argc, char** argv )
 		strcpy(m0,argv[7]);
 		strcpy(m1,argv[8]);
 		strcpy(m2,argv[9]);
-
 	}
 	pthread_t  tid,tidsnd;
 	int  ret;
