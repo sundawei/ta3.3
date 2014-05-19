@@ -418,13 +418,21 @@ void  *GetUrlPic(void *arg)
 			data1.clear();
 			std::vector<char>().swap(data1);
 		}
-		usleep(1000*200);
+		printf("workmode %d\n",atoi(workmode));
+		int sleepm=atoi(workmode);
+		if(sleepm<0)
+			sleepm=500;
+		usleep(1000*sleepm);
 		if(cvWaitKey(20)==27)
 			break;
 	}
 	cvDestroyAllWindows();
+
 	return 0;
 }
+
+
+
 int main( int argc, char** argv )
 {
 	PropertyConfigurator::configure("ta_faceuploader_logconfig.cfg"); 
