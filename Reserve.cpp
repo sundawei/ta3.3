@@ -791,6 +791,97 @@ void changefv(char* sfv)
 	is2.close();
 	return;
 }
+void getdirfiles100(const char* sdir,unsigned int & count,vector<string>& fname)//get filelist from dir
+{
+	std::vector<string> vdirs;
+	getbdirs(time(0),100,vdirs);
+	count = 0;
+	if(vdirs.size()==0||strcmp(sdir,"./bdata")==0)//bddir spec
+	{	
+
+		DIR   *dp;   
+		struct   dirent   *dirp;    
+		if((dp=opendir(sdir))==NULL)   
+		{   
+			//LOG4CXX_TRACE(logger,"no dir " << sdir);
+			count = 0;
+			return ;   
+		}
+
+
+		int ret = 0;
+
+		while((dirp=readdir(dp))!=NULL)   
+		{   
+
+			if(strcmp(dirp->d_name,".")==0   ||   strcmp(dirp->d_name,"..")==0)   
+				continue;
+			string sall = string(sdir)+string("/")+string(dirp->d_name);
+
+			fname.push_back(sall);
+		//	LOG4CXX_TRACE(logger,"push file " << sall);
+
+			ret++;   
+		}	 
+		count += ret;
+		closedir(dp);
+	}
+	else
+	{
+		for(int i=0;i<static_cast<int>(vdirs.size());i++)
+		{
+			DIR   *dp;   
+			struct   dirent   *dirp;    
+			if((dp=opendir(vdirs.at(i).c_str()))==NULL)   
+			{   
+			//	LOG4CXX_TRACE(logger,"no dir " << sdir);
+				count = 0;
+				closedir(dp);
+				continue ;   
+			}
+
+
+			int ret = 0;
+
+			while((dirp=readdir(dp))!=NULL)   
+			{	   
+
+				if(strcmp(dirp->d_name,".")==0   ||   strcmp(dirp->d_name,"..")==0)   
+					continue;
+				string sall = vdirs.at(i)+string("/")+string(dirp->d_name);
+
+				fname.push_back(sall);
+				//LOG4CXX_TRACE(logger,"push file " << sall);
+
+				ret++;   
+			}	 
+			count += ret;
+			closedir(dp);
+		}
+	}
+
+}
+void setnonface(char* uuid)
+{
+	std::vector<string> v;
+	unsigned int ccc=0;
+	string suuid=uuid;
+	getdirfiles100("./",ccc,v);
+	for(int i=0;i<v.size();i++)
+	{
+		printf("%s\n",v.at(i).c_str());
+		int sfaidlen = v.at(i).length();
+		string strsub=v.at(i).substr(sfaidlen-36,36);
+		if(suuid == strsub)
+		{
+			string srtn=string("./bdata/")+strsub;
+			rename(v.at(i).c_str(),srtn.c_str());
+			printf("move afid 2 %s\n",srtn.c_str());
+			break;
+		}
+	}
+	std::vector<string>().swap(v);
+}
 int main(int argc, char** argv)
 {
 	//read config
@@ -915,6 +1006,10 @@ int main(int argc, char** argv)
 	if(argc==2)
 	{
 		changefv(argv[1]);
+	}
+	if(argc==3)
+	{
+		setnonface(argv[1]);
 	}
 	FinalizeEngine(engine);
 	prtlog("main end");
